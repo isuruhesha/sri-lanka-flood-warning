@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flash Flood Early Warning — Sri Jayawardanapura Kotte</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Noto+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #000000;
+    --panel:   #000000;
+    --border:  #ffffff;
+    --accent:  #00b4d8;
+    --accent2: #0077b6;
+    --low:     #00b894;
+    --low-bg:  rgba(0,184,148,0.12);
+    --mid:     #fdcb6e;
+    --mid-bg:  rgba(253,203,110,0.12);
+    --high:    #d63031;
+    --high-bg: rgba(214,48,49,0.14);
+    --text:    #cfe2f3;
+    --muted:   #4a7fa5;
+    --glow:    0 0 24px rgba(0,180,216,0.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:#eef5fb;
+    color:var(--text);
+    font-family:'Noto Sans',sans-serif;
+    min-height:100vh;
+
+    background-image:
+    radial-gradient(circle at top,#d8ebff 0%,#eef5fb 45%,#f8fbff 100%);
+}
+
+  /* ── HEADER ── */
+  header{
+    padding:22px 40px 18px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:18px;
+    background:linear-gradient(135deg,#0b5fa5,#1282d7);backdrop-filter:blur(8px);
+    position:sticky;top:0;z-index:100;
+  }
+
+  .htext h1{font-family:'Rajdhani',sans-serif;font-size:2rem;font-weight:800;letter-spacing:1px;color:#fff;text-transform:uppercase;}
+  .htext p{font-size:0.9rem;color:#dbeafe;margin-top:3px;letter-spacing:0.4px;}
+  .hright{margin-left:auto;display:flex;align-items:center;gap:14px;}
+  .live-badge{background:#ef4444 !important;color:white !important;font-weight:700;box-shadow:0 0 15px rgba(239,68,68,.5);
+    display:flex;align-items:center;gap:7px;
+    background:rgba(0,180,216,0.1);border:1px solid rgba(0, 0, 0, 0.3);
+    border-radius:20px;padding:5px 13px;
+    font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--accent);
+  }
+  .live-dot{width:10px;height:10px;border-radius:50%;background:#ffffff;animation:blink 1.8s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.35;transform:scale(0.65);}}
+  #clock{font-family:'Share Tech Mono',monospace;font-size:0.76rem;color:var(--muted);}
+
+  /* ── LAYOUT ── */
+  main{max-width:1160px;margin:0 auto;padding:26px 40px 40px;}
+
+  /* ── STATUS BAR ── */
+  .sbar{
+    display:flex;align-items:center;flex-wrap:wrap;gap:10px;
+    padding:10px 18px;background:rgba(7,21,43,0.7);
+    border:1px solid var(--border);border-radius:8px;margin-bottom:20px;
+    font-size:0.73rem;font-family:'Share Tech Mono',monospace;
+  }
+  .si{color:var(--muted);} .si span{color:var(--accent);}
+  .ss{color:var(--border);}
+
+  /* ── ALERT BANNER ── */
+  #banner{
+    border-radius:12px;padding:20px 26px;margin-bottom:20px;
+    display:flex;align-items:center;gap:18px;
+    border:1px solid;transition:all 0.4s ease;
+  }
+  #banner.low {background:var(--low-bg); border-color:var(--low);}
+  #banner.mid {background:var(--mid-bg); border-color:var(--mid);}
+  #banner.high{background:var(--high-bg);border-color:var(--high);}
+  #banner.idle{background:rgba(13,42,74,0.3);border-color:var(--border);}
+  .b-icon{font-size:2.1rem;flex-shrink:0;}
+  .b-body h2{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;}
+  .b-body p{font-size:0.82rem;color:var(--muted);margin-top:4px;line-height:1.55;}
+  .b-level{
+    margin-left:auto;font-family:'Rajdhani',sans-serif;
+    font-size:1.6rem;font-weight:700;letter-spacing:2px;
+    padding:7px 18px;border-radius:8px;border:2px solid;
+    text-transform:uppercase;white-space:nowrap;
+  }
+  .low  .b-level{color:var(--low); border-color:var(--low);}
+  .mid  .b-level{color:var(--mid); border-color:var(--mid);}
+  .high .b-level{color:var(--high);border-color:var(--high);}
+  .idle .b-level{color:var(--muted);border-color:var(--border);}
+
+  /* ── GRID ── */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:800px){.grid2{grid-template-columns:1fr;}}
+
+  /* ── PANEL ── */
+  .panel{
+    background:#ffffff;border:1px solid #dbe6f2;box-shadow:0 12px 35px rgba(31,58,147,.08);
+    border-radius:12px;padding:22px;
+    box-shadow:0 4px 28px rgba(0,0,0,0.32);
+  }
+  .ptitle{font-size:1rem !important;font-weight:800 !important;color:#0f172a !important;
+    font-family:'Rajdhani',sans-serif;font-size:0.74rem;font-weight:600;
+    letter-spacing:2px;text-transform:uppercase;color:var(--accent);
+    margin-bottom:16px;display:flex;align-items:center;gap:8px;
+  }
+  .ptitle::before{content:'';width:3px;height:13px;background:var(--accent);border-radius:2px;}
+
+  /* ── LEGEND ── */
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;}
+  .leg{display:flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--muted);}
+  .ldot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+  /* ── TABLE ── */
+  .twrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:0.79rem;}
+  th{color:#0f172a !important;font-size:0.85rem !important;font-weight:800 !important;background:#dbeafe !important;
+    font-family:'Rajdhani',sans-serif;font-size:0.69rem;letter-spacing:1.4px;
+    text-transform:uppercase;color:var(--muted);
+    padding:9px 12px;border-bottom:1px solid var(--border);
+    text-align:left;background:rgba(7,21,43,0.5);white-space:nowrap;
+  }
+  td{
+    padding:10px 12px;border-bottom:1px solid rgba(13,42,74,0.4);
+    font-family:'Share Tech Mono',monospace;font-size:0.75rem;vertical-align:middle;
+  }
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#f3f8fd;}
+
+  /* ── RISK PILL ── */
+  .pill{font-size:0.85rem !important;font-weight:800 !important;padding:6px 14px !important;
+    display:inline-flex;align-items:center;gap:5px;
+    padding:3px 11px;border-radius:11px;
+    font-family:'Rajdhani',sans-serif;font-weight:600;
+    font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;
+  }
+  .pill-LOW {background:var(--low-bg); color:var(--low); border:1px solid var(--low);}
+  .pill-MED {background:var(--mid-bg); color:var(--mid); border:1px solid var(--mid);}
+  .pill-HIGH{background:var(--high-bg);color:var(--high);border:1px solid var(--high);}
+  .pdot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+
+  /* ── AREA TAG ── */
+  .atag{
+    display:inline-block;margin-top:4px;
+    font-size:0.63rem;font-family:'Rajdhani',sans-serif;letter-spacing:0.8px;
+    padding:2px 7px;border-radius:4px;
+  }
+  .a1{background:rgba(0,184,148,0.15);color:var(--low);}
+  .a2{background:rgba(253,203,110,0.15);color:var(--mid);}
+  .a3{background:rgba(214,48,49,0.15);color:var(--high);}
+
+  /* ── MESSAGES ── */
+  .msg{color:var(--muted);font-size:0.8rem;padding:24px;text-align:center;}
+  .errmsg{color:#ff7675;font-size:0.8rem;padding:24px;text-align:center;line-height:1.6;}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp 0.8s linear infinite;vertical-align:middle;margin-right:7px;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+
+  /* ── CALCULATOR ── */
+  .cform{display:flex;flex-direction:column;gap:13px;}
+  label{display:block;font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+  select,input[type=number]{
+    width:100%;background:rgba(4,13,26,0.85);border:1px solid var(--border);
+    border-radius:8px;color:var(--text);padding:9px 12px;
+    font-size:0.82rem;font-family:'Share Tech Mono',monospace;
+    outline:none;transition:border 0.2s;
+  }
+  select:focus,input:focus{border-color:var(--accent);}
+  select option{background:#07152b;}
+  .hint{
+    font-size:0.7rem;color:var(--muted);padding:9px 12px;
+    background:rgba(13,42,74,0.3);border-radius:6px;line-height:1.55;
+  }
+  .cbtn{
+    background:linear-gradient(135deg,var(--accent2),var(--accent));
+    border:none;border-radius:8px;color:#fff;padding:11px;
+    font-family:'Rajdhani',sans-serif;font-size:0.93rem;font-weight:700;
+    letter-spacing:2px;text-transform:uppercase;cursor:pointer;
+    transition:opacity 0.2s;width:100%;
+  }
+  .cbtn:hover{opacity:0.83;}
+  #cresult{
+    border-radius:10px;padding:16px;text-align:center;
+    display:none;border:1px solid;
+  }
+  #cresult h3{font-family:'Rajdhani',sans-serif;font-size:1.45rem;font-weight:700;margin-bottom:5px;}
+  #cresult p{font-size:0.78rem;line-height:1.6;margin-top:6px;}
+  .climits{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px;font-family:'Share Tech Mono',monospace;font-size:0.68rem;}
+  .lu{background:rgba(214,48,49,0.12);padding:7px;border-radius:5px;color:#ff7675;}
+  .ll{background:rgba(0,184,148,0.12);padding:7px;border-radius:5px;color:var(--low);}
+</style>
+
+<style>
+.b-body h2{
+font-family:'Rajdhani',sans-serif !important;
+font-size:2rem !important;
+font-weight:800 !important;
+color:#111827 !important;
+}
+.high .b-body h2{color:#b91c1c !important;}
+.low{box-shadow:0 0 20px rgba(34,197,94,.3);}
+.mid{box-shadow:0 0 20px rgba(234,179,8,.4);}
+.high{box-shadow:0 0 30px rgba(239,68,68,.6);}
+.panel:hover{
+transform:translateY(-4px);
+box-shadow:0 15px 35px rgba(0,0,0,.15);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+  <div class="htext">
+    <h1>Flash Flood Early Warning — Sri Jayawardanapura Kotte</h1>
+    <p>DS Division · Colombo District · Event-Based Rainfall Intensity–Duration Threshold System</p>
+  </div>
+  <div class="hright">
+    <div class="live-badge"><div class="live-dot"></div>LIVE FORECAST</div>
+    <div id="clock"></div>
+  </div>
+</header>
+
+<main>
+
+  <div class="sbar">
+    <div class="si">Division: <span>Sri Jayawardanapura Kotte</span></div>
+    <div class="ss">|</div>
+    <div class="si">Coordinates: <span>6.8935°N, 79.9003°E</span></div>
+    <div class="ss">|</div>
+    <div class="si">Forecast Source: <span>Open-Meteo API</span></div>
+    <div class="ss">|</div>
+    <div class="si">Last Updated: <span id="updated">—</span></div>
+  </div>
+
+  <div id="banner" class="idle">
+    <div class="b-icon">⏳</div>
+    <div class="b-body">
+      <h2>Fetching Forecast Data...</h2>
+      <p>Connecting to Open-Meteo API. Please wait.</p>
+    </div>
+    <div class="b-level">—</div>
+  </div>
+
+  <div class="grid2">
+
+    <!-- EVENT TABLE -->
+    <div class="panel">
+      <div class="ptitle">Detected Rainfall Events — Next 72 Hours</div>
+      <div class="legend">
+        <div class="leg"><div class="ldot" style="background:var(--low)"></div>Low — Below lower threshold</div>
+        <div class="leg"><div class="ldot" style="background:var(--mid)"></div>Medium — Mixed zone</div>
+        <div class="leg"><div class="ldot" style="background:var(--high)"></div>High — Above upper threshold</div>
+      </div>
+      <div class="twrap">
+        <div id="tbl" class="msg"><span class="spin"></span>Loading events...</div>
+      </div>
+    </div>
+
+    <!-- MANUAL CALCULATOR -->
+    <div class="panel">
+      <div class="ptitle">Manual Risk Calculator</div>
+      <div class="cform">
+        <div>
+          <label>Duration of Rainfall Event</label>
+          <select id="cdur">
+            <option value="1">1 hour</option>
+            <option value="2">2 hours</option>
+            <option value="3">3 hours</option>
+            <option value="6">6 hours</option>
+          </select>
+        </div>
+        <div>
+          <label>Maximum Rainfall Intensity (mm/h)</label>
+          <input type="number" id="cint" placeholder="e.g. 15.5" min="0" step="0.1">
+        </div>
+        <div class="hint">
+          Enter the maximum observed or expected rainfall intensity and the event duration to check whether it exceeds the flash flood threshold for Sri Jayawardanapura Kotte.
+        </div>
+        <button class="cbtn" onclick="calc()">▶ ASSESS RISK LEVEL</button>
+        <div id="cresult">
+          <h3 id="crisk"></h3>
+          <p id="cdetail"></p>
+          <div class="climits" id="climits"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ── THRESHOLD COEFFICIENTS ───────────────────────────────────
+// RI = a × D^(−b)
+// Replace with your actual values from Threshold_Coefficients_by_DS_Division.csv
+const UPPER_A = 46.706, UPPER_B = 0.774;
+const LOWER_A = 8.713,  LOWER_B = 0.584;
+// ────────────────────────────────────────────────────────────
+
+const LAT = 6.8935, LON = 79.9003;
+const DURATIONS = [1, 2, 3, 6];
+
+// Clock
+function tick() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleString('en-LK',{timeZone:'Asia/Colombo',
+      year:'numeric',month:'short',day:'2-digit',
+      hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+}
+setInterval(tick, 1000); tick();
+
+// Classify one intensity at one duration
+function classify(intensity, duration) {
+  const upper = UPPER_A * Math.pow(duration, -UPPER_B);
+  const lower = LOWER_A * Math.pow(duration, -LOWER_B);
+  const level = intensity >= upper ? 'HIGH' : intensity >= lower ? 'MED' : 'LOW';
+  return { level, upper, lower };
+}
+
+// Rolling max intensity over windowH hours
+function maxIntensity(rains, windowH) {
+  if (rains.length === 0) return 0;
+  if (rains.length <= windowH) return rains.reduce((a,b)=>a+b,0) / rains.length;
+  let best = 0;
+  for (let i = 0; i <= rains.length - windowH; i++) {
+    const s = rains.slice(i, i + windowH).reduce((a,b)=>a+b,0) / windowH;
+    if (s > best) best = s;
+  }
+  return best;
+}
+
+// Detect rainfall events (1-hour dry gap separation)
+function detectEvents(hourly) {
+  const events = [];
+  let start = -1, dryCount = 0;
+  for (let i = 0; i <= hourly.length; i++) {
+    const rain = i < hourly.length ? hourly[i].rain : 0;
+    if (start === -1) {
+      if (rain > 0) { start = i; dryCount = 0; }
+    } else {
+      if (rain <= 0) {
+        dryCount++;
+        if (dryCount >= 1 || i === hourly.length) {
+          const end = i - dryCount;
+          const slice = hourly.slice(start, end + 1);
+          const rains = slice.map(h => h.rain);
+          events.push({
+            startDT:  hourly[start].dt,
+            endDT:    hourly[end].dt,
+            durH:     slice.length,
+            totalMM:  rains.reduce((a,b)=>a+b,0),
+            rains
+          });
+          start = -1; dryCount = 0;
+        }
+      } else { dryCount = 0; }
+    }
+  }
+  return events;
+}
+
+// Assess worst risk across all durations for one event
+function assess(ev) {
+  const order = ['LOW','MED','HIGH'];
+  let worst = 'LOW', peakI = 0;
+  DURATIONS.forEach(d => {
+    if (d > ev.durH) return;   // skip if event shorter than duration
+    const I = maxIntensity(ev.rains, d);
+    if (I > peakI) peakI = I;
+    const { level } = classify(I, d);
+    if (order.indexOf(level) > order.indexOf(worst)) worst = level;
+  });
+  // If event shorter than 1h, still check at 1h
+  if (ev.durH < 1) {
+    const I = maxIntensity(ev.rains, 1);
+    if (I > peakI) peakI = I;
+    const { level } = classify(I, 1);
+    if (order.indexOf(level) > order.indexOf(worst)) worst = level;
+  }
+  return { risk: worst, peakI };
+}
+
+// Format helpers
+function fDate(dt) {
+  return dt.toLocaleDateString('en-LK',{timeZone:'Asia/Colombo',weekday:'short',month:'short',day:'numeric'});
+}
+function fTime(dt) {
+  return dt.toLocaleTimeString('en-LK',{timeZone:'Asia/Colombo',hour:'2-digit',minute:'2-digit',hour12:false});
+}
+
+// Update banner
+function setBanner(risk, eventCount) {
+  const el = document.getElementById('banner');
+  const icons  = {LOW:'🟢', MED:'🟡', HIGH:'🔴'};
+  const labels = {LOW:'LOW RISK', MED:'MEDIUM RISK', HIGH:'HIGH RISK'};
+  const titles = {
+    LOW:'No Immediate Threat — Sri Jayawardanapura Kotte',
+    MED:'Flood Watch — Sri Jayawardanapura Kotte',
+    HIGH:'Flash Flood Warning — Sri Jayawardanapura Kotte'
+  };
+  const msgs = {
+    LOW: eventCount === 0
+      ? 'No rainfall events detected in the 72-hour forecast. Conditions remain dry.'
+      : `All ${eventCount} detected event(s) have intensities below the lower threshold. Flash flood risk is LOW.`,
+    MED: `One or more forecast events fall within the mixed threshold zone (Area 2). Moderate flash flood risk for Sri Jayawardanapura Kotte. Monitor conditions closely.`,
+    HIGH: `⚠ One or more forecast events exceed the upper threshold (Area 3). HIGH flash flood risk for Sri Jayawardanapura Kotte. Take immediate precautionary action.`
+  };
+  const cls = {LOW:'low', MED:'mid', HIGH:'high'};
+  el.className = cls[risk];
+  el.innerHTML = `
+    <div class="b-icon">${icons[risk]}</div>
+    <div class="b-body">
+      <h2>${titles[risk]}</h2>
+      <p>${msgs[risk]}</p>
+    </div>
+    <div class="b-level">${labels[risk]}</div>`;
+}
+
+// Build event table
+function buildTable(events) {
+  const container = document.getElementById('tbl');
+  const order = ['LOW','MED','HIGH'];
+
+  if (events.length === 0) {
+    setBanner('LOW', 0);
+    container.innerHTML = '<div class="msg">No rainfall events detected in the next 72-hour forecast.</div>';
+    return;
+  }
+
+  const worst = events.reduce((w, e) =>
+    order.indexOf(e.assessment.risk) > order.indexOf(w) ? e.assessment.risk : w, 'LOW');
+  setBanner(worst, events.length);
+
+  const rl = {LOW:'Low Risk', MED:'Medium Risk', HIGH:'High Risk'};
+  const al = {LOW:'Area 1 — NF Zone', MED:'Area 2 — Mixed Zone', HIGH:'Area 3 — Flood Zone'};
+  const ac = {LOW:'a1', MED:'a2', HIGH:'a3'};
+
+  let html = `<table><thead><tr>
+    <th>#</th>
+    <th>Event Start</th>
+    <th>Event End</th>
+    <th>Total Rain (mm)</th>
+    <th>Peak Intensity (mm/h)</th>
+    <th>Risk Level</th>
+  </tr></thead><tbody>`;
+
+  events.forEach((ev, i) => {
+    const a = ev.assessment;
+    html += `<tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td>${fDate(ev.startDT)}<br><span style="color:var(--accent);font-size:0.78rem">${fTime(ev.startDT)}</span></td>
+      <td>${fDate(ev.endDT)}<br><span style="color:var(--accent);font-size:0.78rem">${fTime(ev.endDT)}</span></td>
+      <td>${ev.totalMM.toFixed(1)}</td>
+      <td>${a.peakI.toFixed(2)}</td>
+      <td>
+        <span class="pill pill-${a.risk}"><span class="pdot"></span>${rl[a.risk]}</span>
+        <br><span class="atag ${ac[a.risk]}">${al[a.risk]}</span>
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+  document.getElementById('updated').textContent =
+    new Date().toLocaleTimeString('en-LK',{timeZone:'Asia/Colombo',hour12:false});
+}
+
+// Fetch and run
+async function load() {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+      `&hourly=precipitation&timezone=Asia%2FColombo&forecast_days=3`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    const hourly = data.hourly.time.map((t, i) => ({
+      dt:   new Date(t),
+      rain: data.hourly.precipitation[i] ?? 0
+    }));
+    const rawEvents = detectEvents(hourly);
+    const events = rawEvents.map(ev => ({ ...ev, assessment: assess(ev) }));
+    buildTable(events);
+  } catch (err) {
+    document.getElementById('banner').className = 'idle';
+    document.getElementById('banner').innerHTML = `
+      <div class="b-icon">⚠</div>
+      <div class="b-body"><h2>Connection Error</h2>
+      <p>Could not reach Open-Meteo API. Check your internet connection and reload the page.</p></div>
+      <div class="b-level">—</div>`;
+    document.getElementById('tbl').innerHTML =
+      `<div class="errmsg">Failed to fetch forecast data.<br>${err.message}</div>`;
+  }
+}
+
+// Manual calculator
+function calc() {
+  const dur = parseFloat(document.getElementById('cdur').value);
+  const I   = parseFloat(document.getElementById('cint').value);
+  const res = document.getElementById('cresult');
+
+  if (isNaN(I) || I < 0) {
+    res.style.display = 'block';
+    res.style.background = 'rgba(214,48,49,0.1)';
+    res.style.borderColor = 'var(--high)';
+    document.getElementById('crisk').innerHTML = '<span style="color:var(--high)">Invalid Input</span>';
+    document.getElementById('cdetail').textContent = 'Please enter a valid intensity value (≥ 0 mm/h).';
+    document.getElementById('climits').innerHTML = '';
+    return;
+  }
+
+  const { level, upper, lower } = classify(I, dur);
+  const cfg = {
+    LOW:  { bg:'var(--low-bg)',  bc:'var(--low)',  color:'var(--low)',  icon:'🟢',
+            label:'LOW RISK',    area:'Area 1 — Below Lower Threshold (NF Zone)',
+            msg:`An intensity of <b>${I} mm/h</b> over <b>${dur}h</b> is below the lower limit (${lower.toFixed(2)} mm/h). This event is unlikely to cause flash flooding in Sri Jayawardanapura Kotte.` },
+    MED:  { bg:'var(--mid-bg)',  bc:'var(--mid)',  color:'var(--mid)',  icon:'🟡',
+            label:'MEDIUM RISK', area:'Area 2 — Mixed Zone (Between Thresholds)',
+            msg:`An intensity of <b>${I} mm/h</b> over <b>${dur}h</b> falls in the mixed zone (${lower.toFixed(2)} – ${upper.toFixed(2)} mm/h). Flash flooding is possible. Monitor conditions closely.` },
+    HIGH: { bg:'var(--high-bg)', bc:'var(--high)', color:'var(--high)', icon:'🔴',
+            label:'HIGH RISK',   area:'Area 3 — Above Upper Threshold (Flood Zone)',
+            msg:`An intensity of <b>${I} mm/h</b> over <b>${dur}h</b> exceeds the upper threshold (${upper.toFixed(2)} mm/h). Flash flood risk is <b>HIGH</b> for Sri Jayawardanapura Kotte. Take immediate action.` }
+  };
+  const c = cfg[level];
+  res.style.display = 'block';
+  res.style.background = c.bg;
+  res.style.borderColor = c.bc;
+  document.getElementById('crisk').innerHTML =
+    `<span style="color:${c.color}">${c.icon} ${c.label}</span>`;
+  document.getElementById('cdetail').innerHTML =
+    `<span style="color:${c.color};font-size:0.72rem">${c.area}</span><br><br>${c.msg}`;
+  document.getElementById('climits').innerHTML =
+    `<div class="lu">▲ Upper limit: ${upper.toFixed(2)} mm/h</div>
+     <div class="ll">▼ Lower limit: ${lower.toFixed(2)} mm/h</div>`;
+}
+
+load();
+</script>
+</body>
+</html>
