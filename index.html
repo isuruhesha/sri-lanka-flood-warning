@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flash Flood Early Warning — Sri Jayawardanapura Kotte</title>
+<title>Experimental Flash-Flood Rainfall Risk Indicator — Sri Jayawardanapura Kotte</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Noto+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -214,8 +214,8 @@ box-shadow:0 15px 35px rgba(0,0,0,.15);
 <header>
 
   <div class="htext">
-    <h1>Flash Flood Early Warning — Sri Jayawardanapura Kotte</h1>
-    <p>DS Division · Colombo District · Event-Based Rainfall Intensity–Duration Threshold System</p>
+    <h1>Flash-Flood Rainfall Risk Indicator (Experimental) — Sri Jayawardanapura Kotte</h1>
+    <p>DS Division · Colombo District · Experimental prototype · Event-based rainfall intensity–duration thresholds</p>
   </div>
   <div class="hright">
     <div class="live-badge"><div class="live-dot"></div>LIVE FORECAST</div>
@@ -235,6 +235,14 @@ box-shadow:0 15px 35px rgba(0,0,0,.15);
     <div class="si">Last Updated: <span id="updated">—</span></div>
   </div>
 
+  <div id="disclaimer" role="note" style="margin:10px 0;padding:10px 14px;border:1px solid #f0c36d;border-radius:8px;background:#fff8e1;color:#5a4300;font-size:0.8rem;line-height:1.55;">
+    <b>Experimental prototype — not an official warning.</b>
+    This page compares forecast rainfall with empirical thresholds that have not been validated, and the forecast
+    itself has not been verified for this location. Forecasts are generally more reliable at shorter lead times
+    (the next 24 hours), but local accuracy is unknown. Do not act on this page alone: follow official warnings and
+    advice from the Disaster Management Centre (DMC).
+  </div>
+
   <div id="banner" class="idle">
     <div class="b-icon">⏳</div>
     <div class="b-body">
@@ -251,7 +259,7 @@ box-shadow:0 15px 35px rgba(0,0,0,.15);
       <div class="ptitle">Detected Rainfall Events — Next 72 Hours</div>
       <div class="legend">
         <div class="leg"><div class="ldot" style="background:var(--low)"></div>Low — Below lower threshold</div>
-        <div class="leg"><div class="ldot" style="background:var(--mid)"></div>Medium — Mixed zone</div>
+        <div class="leg"><div class="ldot" style="background:var(--mid)"></div>Medium — Between thresholds</div>
         <div class="leg"><div class="ldot" style="background:var(--high)"></div>High — Above upper threshold</div>
       </div>
       <div class="twrap">
@@ -277,7 +285,7 @@ box-shadow:0 15px 35px rgba(0,0,0,.15);
           <input type="number" id="cint" placeholder="e.g. 15.5" min="0" step="0.1">
         </div>
         <div class="hint">
-          Enter the maximum observed or expected rainfall intensity and the event duration to check whether it exceeds the flash flood threshold for Sri Jayawardanapura Kotte.
+          Enter the maximum observed or expected rainfall intensity and the event duration to check which threshold zone (Low, Medium or High) it falls in for Sri Jayawardanapura Kotte.
         </div>
         <button class="cbtn" onclick="calc()">▶ ASSESS RISK LEVEL</button>
         <div id="cresult">
@@ -396,16 +404,16 @@ function setBanner(risk, eventCount) {
   const icons  = {LOW:'🟢', MED:'🟡', HIGH:'🔴'};
   const labels = {LOW:'LOW RISK', MED:'MEDIUM RISK', HIGH:'HIGH RISK'};
   const titles = {
-    LOW:'No Immediate Threat — Sri Jayawardanapura Kotte',
-    MED:'Flood Watch — Sri Jayawardanapura Kotte',
-    HIGH:'Flash Flood Warning — Sri Jayawardanapura Kotte'
+    LOW:'Low Rainfall Risk Indication — Sri Jayawardanapura Kotte',
+    MED:'Medium Rainfall Risk Indication — Sri Jayawardanapura Kotte',
+    HIGH:'High Rainfall Risk Indication — Sri Jayawardanapura Kotte'
   };
   const msgs = {
     LOW: eventCount === 0
       ? 'No rainfall events detected in the 72-hour forecast. Conditions remain dry.'
-      : `All ${eventCount} detected event(s) have intensities below the lower threshold. Flash flood risk is LOW.`,
-    MED: `One or more forecast events fall within the mixed threshold zone (Area 2). Moderate flash flood risk for Sri Jayawardanapura Kotte. Monitor conditions closely.`,
-    HIGH: `⚠ One or more forecast events exceed the upper threshold (Area 3). HIGH flash flood risk for Sri Jayawardanapura Kotte. Take immediate precautionary action.`
+      : `All ${eventCount} detected event(s) have forecast intensities below the lower threshold (Low zone).`,
+    MED: `One or more forecast events fall between the lower and upper thresholds (Medium zone). Experimental indication only; check official DMC advice.`,
+    HIGH: `One or more forecast events exceed the upper threshold (High zone). Experimental indication only, not an official warning; check official DMC advice.`
   };
   const cls = {LOW:'low', MED:'mid', HIGH:'high'};
   el.className = cls[risk];
@@ -434,7 +442,7 @@ function buildTable(events) {
   setBanner(worst, events.length);
 
   const rl = {LOW:'Low Risk', MED:'Medium Risk', HIGH:'High Risk'};
-  const al = {LOW:'Area 1 — NF Zone', MED:'Area 2 — Mixed Zone', HIGH:'Area 3 — Flood Zone'};
+  const al = {LOW:'Low zone', MED:'Medium zone', HIGH:'High zone'};
   const ac = {LOW:'a1', MED:'a2', HIGH:'a3'};
 
   let html = `<table><thead><tr>
@@ -475,7 +483,7 @@ async function load() {
     const res  = await fetch(url);
     const data = await res.json();
     const hourly = data.hourly.time.map((t, i) => ({
-      dt:   new Date(t),
+      dt:   new Date(t + '+05:30'),   // API returns Asia/Colombo local time without an offset
       rain: data.hourly.precipitation[i] ?? 0
     }));
     const rawEvents = detectEvents(hourly);
@@ -512,14 +520,14 @@ function calc() {
   const { level, upper, lower } = classify(I, dur);
   const cfg = {
     LOW:  { bg:'var(--low-bg)',  bc:'var(--low)',  color:'var(--low)',  icon:'🟢',
-            label:'LOW RISK',    area:'Area 1 — Below Lower Threshold (NF Zone)',
-            msg:`An intensity of <b>${I} mm/h</b> over <b>${dur}h</b> is below the lower limit (${lower.toFixed(2)} mm/h). This event is unlikely to cause flash flooding in Sri Jayawardanapura Kotte.` },
+            label:'LOW RISK',    area:'Low zone — below lower threshold',
+            msg:`An intensity of <b>${I} mm/h</b> over <b>${dur}h</b> is below the lower limit (${lower.toFixed(2)} mm/h) (Low zone). This is a rainfall-threshold comparison, not a guarantee of safety.` },
     MED:  { bg:'var(--mid-bg)',  bc:'var(--mid)',  color:'var(--mid)',  icon:'🟡',
-            label:'MEDIUM RISK', area:'Area 2 — Mixed Zone (Between Thresholds)',
-            msg:`An intensity of <b>${I} mm/h</b> over <b>${dur}h</b> falls in the mixed zone (${lower.toFixed(2)} – ${upper.toFixed(2)} mm/h). Flash flooding is possible. Monitor conditions closely.` },
+            label:'MEDIUM RISK', area:'Medium zone — between thresholds',
+            msg:`An intensity of <b>${I} mm/h</b> over <b>${dur}h</b> falls between the thresholds (${lower.toFixed(2)} – ${upper.toFixed(2)} mm/h) (Medium zone). Stay alert and check official DMC advice.` },
     HIGH: { bg:'var(--high-bg)', bc:'var(--high)', color:'var(--high)', icon:'🔴',
-            label:'HIGH RISK',   area:'Area 3 — Above Upper Threshold (Flood Zone)',
-            msg:`An intensity of <b>${I} mm/h</b> over <b>${dur}h</b> exceeds the upper threshold (${upper.toFixed(2)} mm/h). Flash flood risk is <b>HIGH</b> for Sri Jayawardanapura Kotte. Take immediate action.` }
+            label:'HIGH RISK',   area:'High zone — above upper threshold',
+            msg:`An intensity of <b>${I} mm/h</b> over <b>${dur}h</b> exceeds the upper threshold (${upper.toFixed(2)} mm/h) (High zone). Experimental indication only; follow official DMC instructions.` }
   };
   const c = cfg[level];
   res.style.display = 'block';
@@ -535,6 +543,7 @@ function calc() {
 }
 
 load();
+setInterval(load, 30 * 60 * 1000);   // refresh every 30 minutes
 </script>
 </body>
 </html>
