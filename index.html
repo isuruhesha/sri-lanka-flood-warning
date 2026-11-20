@@ -92,8 +92,19 @@
   .idle .b-level{color:var(--muted);border-color:var(--border);}
 
   /* ── GRID ── */
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .grid2{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:20px;}
   @media(max-width:800px){.grid2{grid-template-columns:1fr;}}
+  .grid2>*,.panel{min-width:0;}
+  .legend{flex-wrap:wrap;}
+  @media(max-width:600px){
+    header{flex-wrap:wrap;gap:10px;padding:14px 16px;}
+    main{padding-left:12px;padding-right:12px;}
+    .htext h1{font-size:1.25rem;letter-spacing:0.5px;}
+    .hright{margin-left:0;flex-wrap:wrap;gap:8px;}
+    #banner{flex-wrap:wrap;padding:16px;gap:12px;}
+    .b-level{margin-left:0;font-size:1.2rem;}
+    .b-body{min-width:0;flex:1 1 200px;overflow-wrap:anywhere;}
+  }
 
   /* ── PANEL ── */
   .panel{
@@ -115,6 +126,8 @@
 
   /* ── TABLE ── */
   .twrap{overflow-x:auto;}
+  th{padding:9px 7px !important;letter-spacing:0.4px !important;font-size:0.78rem !important;white-space:normal !important;}
+  td{padding-left:7px !important;padding-right:7px !important;}
   table{width:100%;border-collapse:collapse;font-size:0.79rem;}
   th{color:#0f172a !important;font-size:0.85rem !important;font-weight:800 !important;background:#dbeafe !important;
     font-family:'Rajdhani',sans-serif;font-size:0.69rem;letter-spacing:1.4px;
@@ -302,9 +315,10 @@ box-shadow:0 15px 35px rgba(0,0,0,.15);
 <script>
 // ── THRESHOLD COEFFICIENTS ───────────────────────────────────
 // RI = a × D^(−b)
-// Replace with your actual values from Threshold_Coefficients_by_DS_Division.csv
+// Values from threshold_coefficients.csv (threshold_analysis.R, 2018-2022 rainfall):
+//   upper: a = 46.706, slope = -0.774 ;  lower: a = 10.240, slope = -0.623
 const UPPER_A = 46.706, UPPER_B = 0.774;
-const LOWER_A = 8.713,  LOWER_B = 0.584;
+const LOWER_A = 10.240, LOWER_B = 0.623;
 // ────────────────────────────────────────────────────────────
 
 const LAT = 6.8935, LON = 79.9003;
@@ -404,14 +418,14 @@ function setBanner(risk, eventCount) {
   const icons  = {LOW:'🟢', MED:'🟡', HIGH:'🔴'};
   const labels = {LOW:'LOW RISK', MED:'MEDIUM RISK', HIGH:'HIGH RISK'};
   const titles = {
-    LOW:'Low Rainfall Risk Indication — Sri Jayawardanapura Kotte',
+    LOW:'Low Rainfall-Threshold Exceedance — Sri Jayawardanapura Kotte',
     MED:'Medium Rainfall Risk Indication — Sri Jayawardanapura Kotte',
     HIGH:'High Rainfall Risk Indication — Sri Jayawardanapura Kotte'
   };
   const msgs = {
     LOW: eventCount === 0
-      ? 'No rainfall events detected in the 72-hour forecast. Conditions remain dry.'
-      : `All ${eventCount} detected event(s) have forecast intensities below the lower threshold (Low zone).`,
+      ? 'No rainfall events detected in the 72-hour forecast. A Low indication is not a guarantee of safety.'
+      : `All ${eventCount} detected event(s) have forecast intensities below the lower threshold (Low zone). A Low indication is not a guarantee of safety.`,
     MED: `One or more forecast events fall between the lower and upper thresholds (Medium zone). Experimental indication only; check official DMC advice.`,
     HIGH: `One or more forecast events exceed the upper threshold (High zone). Experimental indication only, not an official warning; check official DMC advice.`
   };
@@ -429,6 +443,8 @@ function setBanner(risk, eventCount) {
 // Build event table
 function buildTable(events) {
   const container = document.getElementById('tbl');
+  document.getElementById('updated').textContent =
+    new Date().toLocaleTimeString('en-LK',{timeZone:'Asia/Colombo',hour12:false});
   const order = ['LOW','MED','HIGH'];
 
   if (events.length === 0) {
@@ -471,8 +487,6 @@ function buildTable(events) {
 
   html += '</tbody></table>';
   container.innerHTML = html;
-  document.getElementById('updated').textContent =
-    new Date().toLocaleTimeString('en-LK',{timeZone:'Asia/Colombo',hour12:false});
 }
 
 // Fetch and run
