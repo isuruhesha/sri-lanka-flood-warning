@@ -219,6 +219,16 @@ color:#111827 !important;
 transform:translateY(-4px);
 box-shadow:0 15px 35px rgba(0,0,0,.15);
 }
+  /* Accessibility: darker text colours so that text meets WCAG 2 AA contrast (4.5:1) */
+  :root{--muted:#2f5f85;--accent:#00647f;--low:#006b55;--mid:#7a5200;}
+  .live-badge{background:#c62828 !important;}
+  .hint{color:#1d3a57;}
+  #cresult p,#cresult p b,#cresult p span{color:#1d3a57 !important;}
+  .lu{color:#9b1c1c;}
+  :root{--high:#b71c1c;}
+  .errmsg{color:#7f1d1d !important;}
+  .si{color:#e3edf7 !important;} .si span{color:#8fe3ff !important;}
+  #clock{color:#e3edf7 !important;}
 </style>
 </head>
 
@@ -285,7 +295,7 @@ box-shadow:0 15px 35px rgba(0,0,0,.15);
       <div class="ptitle">Manual Risk Calculator</div>
       <div class="cform">
         <div>
-          <label>Duration of Rainfall Event</label>
+          <label for="cdur">Duration of Rainfall Event</label>
           <select id="cdur">
             <option value="1">1 hour</option>
             <option value="2">2 hours</option>
@@ -294,7 +304,7 @@ box-shadow:0 15px 35px rgba(0,0,0,.15);
           </select>
         </div>
         <div>
-          <label>Maximum Rainfall Intensity (mm/h)</label>
+          <label for="cint">Maximum Rainfall Intensity (mm/h)</label>
           <input type="number" id="cint" placeholder="e.g. 15.5" min="0" step="0.1">
         </div>
         <div class="hint">
